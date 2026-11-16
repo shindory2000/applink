@@ -53,6 +53,7 @@
     <div class="card">
       <label for="src">開きたいページの URL</label>
       <input id="src" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off">
+      <p class="note" id="err" style="display:none;color:#b42318">作れるのは YouTube・Instagram・X・Amazon・TikTok・LINE と、自社のサイトのリンクだけです。</p>
       <div class="row"><button class="btn" id="make" type="button">リンクを作る</button></div>
       <div id="result">
         <label>できたリンク</label>
@@ -89,6 +90,8 @@
   var inTikTok = /BytedanceWebview|musical_ly|TikTok/i.test(ua);
   var inOtherApp =/Instagram|FBAN|FBAV|FB_IAB|BytedanceWebview|musical_ly|TikTok|Twitter/i.test(ua);
 
+  var OWN_SITES = /(^|\.)(lulinecast\.jp|nakamuradental\.jp|forever-young\.jp)$/;
+
   // 開きたい URL を、どのアプリでどう開くかに変える
   function plan(raw) {
     var u;
@@ -121,6 +124,8 @@
     } else if (host === 'line.me' || host === 'lin.ee') {
       r.name = 'LINE'; r.pkg = 'jp.naver.line.android';
     }
+    // 悪用されないよう、飛び先は上のアプリと自社のサイトだけにする
+    if (!r.name && !OWN_SITES.test(host)) return null;
     return r;
   }
 
@@ -220,7 +225,13 @@
     var v = src.value.trim();
     if (v && !/^https?:\/\//i.test(v)) v = 'https://' + v;
     var r = plan(v);
-    if (!r) { src.focus(); return; }
+    var err = document.getElementById('err');
+    if (!r) {
+      err.style.display = v ? 'block' : 'none';
+      document.getElementById('result').style.display = 'none';
+      src.focus(); return;
+    }
+    err.style.display = 'none';
     var base = location.origin + location.pathname;
     var link = r.vid && /^[\w-]{6,20}$/.test(r.vid) && !r.web.match(/\/shorts\//)
       ? base + '?y=' + r.vid
