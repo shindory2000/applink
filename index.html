@@ -73,6 +73,7 @@
     <img id="thumb" alt="" style="display:none">
     <div class="stack" id="openBtns" style="display:none">
       <a class="btn" id="appBtn">アプリで開く</a>
+      <a class="btn sub" id="safariBtn" style="display:none">Safari を通して YouTube アプリで見る</a>
       <a class="btn sub" id="webBtn">ブラウザで開く</a>
     </div>
   </section>
@@ -191,8 +192,15 @@
     var left = false, start = Date.now();
     document.addEventListener('visibilitychange', function () { if (document.hidden) left = true; });
     location.href = app;
-    // URLgenius と同じく、すぐ戻ってきた＝アプリが無いとみて Web のページへ
-    if (r.name === 'YouTube' && app.indexOf('x-safari-') !== 0) {
+    // Instagram などのアプリの中では Web に切り替えず、押せるボタンを残す
+    var inInApp = inLine || inOtherApp;
+    if (r.name === 'YouTube' && isIOS && inInApp && !inTikTok) {
+      var sb = document.getElementById('safariBtn');
+      sb.href = 'x-safari-' + location.href;
+      sb.style.display = 'block';
+    }
+    // アプリの外では URLgenius と同じく、すぐ戻ってきた＝アプリが無いとみて Web のページへ
+    if (r.name === 'YouTube' && !inInApp && app.indexOf('x-safari-') !== 0) {
       setTimeout(function () {
         if (!left && !document.hidden && Date.now() - start < 5000) location.replace(r.web);
       }, 1000);
