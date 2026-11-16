@@ -2,84 +2,246 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>アプリで開くリンク</title>
+<meta name="theme-color" content="#141310">
+<title>go. アプリで開くリンク</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f6f7f8; --surface: #fff; --text: #1f2328; --muted: #656d76;
-    --line: #d8dee4; --accent: #1f6f4a; --accent-text: #fff;
+    --ground: #141310;
+    --ground-2: #1d1c17;
+    --text: #f1f0ea;
+    --muted: rgba(241, 240, 234, .58);
+    --faint: rgba(241, 240, 234, .14);
+    --accent: #e4ff3d;
+    --on-accent: #141310;
+    --danger: #ff8a7a;
+    --ease: cubic-bezier(0.19, 1, 0.22, 1);
   }
   * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
-    line-height: 1.7; -webkit-text-size-adjust: 100%;
+    margin: 0; min-height: 100svh; background: var(--ground); color: var(--text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", sans-serif;
+    line-height: 1.7; overflow-x: hidden;
   }
-  main { max-width: 560px; margin: 0 auto; padding: 32px 16px 48px; }
-  h1 { font-size: 22px; font-weight: 600; margin: 0 0 6px; }
-  .lead { color: var(--muted); font-size: 14px; margin: 0 0 24px; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }
-  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-  input[type=url], .out {
-    width: 100%; font: inherit; font-size: 15px; padding: 10px 12px;
-    border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--text);
+  a { color: inherit; }
+  .wrap { max-width: 620px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+  /* 背景をゆっくり流れる薄い大きな文字 */
+  .drift {
+    position: fixed; inset: auto 0 6vh 0; z-index: 0; pointer-events: none;
+    font-weight: 900; font-size: 34vh; line-height: 1; white-space: nowrap;
+    color: var(--text); opacity: .035; letter-spacing: -.04em;
+    animation: drift 60s linear infinite;
   }
-  .out { word-break: break-all; font-size: 13px; background: var(--bg); }
-  .btn {
-    display: block; width: 100%; text-align: center; text-decoration: none;
-    font: inherit; font-size: 16px; font-weight: 600; padding: 12px; border-radius: 6px;
-    border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); cursor: pointer;
+  @keyframes drift { to { transform: translateX(-50%); } }
+
+  .mark { display: flex; align-items: baseline; gap: 10px; padding: 22px 0 0; font-size: 13px; color: var(--muted); }
+  .mark b { font-family: "JetBrains Mono", monospace; font-size: 22px; color: var(--accent); letter-spacing: -.04em; }
+
+  /* 作る画面 */
+  .hero { padding: 13vh 0 0; }
+  .hero h1 {
+    margin: 0; font-weight: 900; letter-spacing: -.035em;
+    font-size: clamp(60px, 18vw, 128px); line-height: .9;
   }
-  .btn.sub { background: #fff; color: var(--accent); }
-  .row { display: flex; gap: 8px; margin-top: 12px; }
-  .row .btn { flex: 1; }
-  .note { font-size: 14px; color: var(--muted); margin: 12px 0 0; }
-  #result { margin-top: 20px; display: none; }
-  #qr { margin-top: 16px; display: flex; justify-content: center; }
-  #qr img, #qr canvas { width: 180px; height: 180px; }
-  .stack > * + * { margin-top: 10px; }
-  .center { text-align: center; }
-  #open { display: none; }
-  #thumb { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; margin: 0 0 16px; background: var(--line); }
+  .hero h1 span { color: var(--accent); }
+  .hero p { margin: 28px 0 0; max-width: 25em; font-size: 15px; color: var(--muted); }
+
+  form { margin-top: 18vh; }
+  .field { display: block; margin-bottom: 30px; }
+  .field span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+  .field input {
+    width: 100%; font: inherit; font-size: 20px; font-weight: 700; color: var(--text);
+    background: transparent; border: 0; border-bottom: 2px solid var(--faint);
+    padding: 8px 0 10px; border-radius: 0; outline: none;
+    transition: border-color .6s var(--ease);
+  }
+  .field input::placeholder { color: rgba(241, 240, 234, .28); font-weight: 400; }
+  .field input:focus { border-color: var(--accent); }
+  .err { margin: -14px 0 24px; font-size: 14px; color: var(--danger); display: none; }
+
+  .pill {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    font: inherit; font-size: 17px; font-weight: 700; text-decoration: none;
+    background: var(--accent); color: var(--on-accent); border: 0; border-radius: 999px;
+    padding: 17px 30px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: transform .5s var(--ease);
+  }
+  .pill:active { transform: scale(.95); }
+  .pill.ghost { background: transparent; color: var(--text); box-shadow: inset 0 0 0 1.5px var(--faint); }
+  .pill svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* できたリンク：スタンプが貼られる */
+  #result { display: none; margin-top: 16vh; padding-bottom: 12vh; }
+  .stage { position: relative; height: 230px; display: flex; align-items: center; justify-content: center; }
+  .stage::before {
+    content: ""; position: absolute; inset: 0; border-radius: 28px;
+    background: var(--ground-2);
+  }
+  .sticker {
+    position: relative; display: inline-flex; align-items: center; gap: 12px;
+    background: #fff; color: #141310; border-radius: 999px; padding: 16px 28px 16px 22px;
+    font-size: 24px; font-weight: 700; letter-spacing: -.01em;
+    transform: rotate(-5deg);
+    box-shadow: 0 22px 44px -12px rgba(5, 5, 3, .7);
+  }
+  .sticker svg { width: 26px; height: 26px; stroke: #2a7cff; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+  .slap { animation: slap .9s var(--ease) both; }
+  @keyframes slap {
+    0% { opacity: 0; transform: translateY(-30px) scale(1.5) rotate(-18deg); }
+    100% { opacity: 1; transform: translateY(0) scale(1) rotate(-5deg); }
+  }
+  .stage small { position: absolute; left: 20px; bottom: 14px; font-size: 12px; color: var(--muted); }
+
+  .linkrow { margin-top: 36px; }
+  .linkrow code {
+    display: block; font-family: "JetBrains Mono", monospace; font-size: 15px; word-break: break-all;
+    color: var(--accent); padding-bottom: 14px;
+  }
+  .linkrow .acts { display: flex; gap: 10px; flex-wrap: wrap; }
+  .kind { font-size: 14px; color: var(--muted); margin: 18px 0 0; }
+
+  .how { margin-top: 64px; display: grid; grid-template-columns: 1fr 132px; gap: 28px; align-items: start; }
+  .how ol { margin: 0; padding: 0; list-style: none; counter-reset: s; font-size: 15px; }
+  .how li { counter-increment: s; padding: 0 0 14px 34px; position: relative; }
+  .how li::before {
+    content: counter(s); position: absolute; left: 0; top: -2px;
+    font-family: "JetBrains Mono", monospace; font-size: 18px; color: var(--accent);
+  }
+  .how li b { font-weight: 700; }
+  #qr { background: #fff; padding: 10px; border-radius: 10px; width: 132px; }
+  #qr img, #qr canvas { display: block; width: 112px !important; height: 112px !important; }
+  .qrcap { font-size: 12px; color: var(--muted); margin-top: 6px; text-align: center; }
+
+  .foot { padding: 0 0 40px; font-size: 12px; color: var(--muted); }
+
+  /* 押した人が見る画面 */
+  #open { display: none; min-height: 100svh; }
+  .cover { position: relative; height: 54svh; overflow: hidden; }
+  .cover img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    -webkit-mask-image: linear-gradient(#000 45%, transparent);
+    mask-image: linear-gradient(#000 45%, transparent);
+    transform: scale(1.08); opacity: 0;
+    transition: transform 1.6s var(--ease), opacity 1.2s var(--ease);
+  }
+  .cover img.on { transform: scale(1); opacity: 1; }
+  .cover .mark { position: absolute; left: 20px; top: 0; }
+  .meta { margin-top: -12svh; position: relative; }
+  .meta .who { font-size: 13px; color: var(--accent); font-weight: 700; }
+  .meta h1 {
+    margin: 6px 0 0; font-size: clamp(26px, 7.4vw, 40px); line-height: 1.12; font-weight: 900; letter-spacing: -.02em;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .meta.plain { margin-top: 26svh; }
+  .meta.plain h1 { font-size: clamp(44px, 13vw, 76px); line-height: .95; }
+  .go { margin-top: 34px; }
+  .go .pill { width: 100%; padding: 20px; font-size: 18px; }
+  .go .alt { display: block; margin-top: 18px; text-align: center; font-size: 14px; color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
+  .status { margin: 34px 0 0; font-size: 13px; color: var(--muted); }
+  .bar { height: 2px; background: var(--faint); margin-top: 10px; overflow: hidden; border-radius: 2px; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); animation: draw 1.4s var(--ease) forwards; }
+  @keyframes draw { to { width: 100%; } }
+  #openBtns { display: none; }
+  .rise { animation: rise 1s var(--ease) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, .drift { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
-<main>
+<div class="drift" aria-hidden="true">押したら、アプリ。押したら、アプリ。</div>
 
-  <section id="maker">
-    <h1>アプリで開くリンクを作る</h1>
-    <p class="lead">LINE や Instagram の中で押されても、アプリか普段のブラウザで開くリンクに変えます。</p>
-    <div class="card">
-      <label for="src">開きたいページの URL</label>
-      <input id="src" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off">
-      <p class="note" id="err" style="display:none;color:#b42318">作れるのは YouTube・Instagram・X・Amazon・TikTok・LINE と、自社のサイトのリンクだけです。</p>
-      <div class="row"><button class="btn" id="make" type="button">リンクを作る</button></div>
-      <div id="result">
-        <label>できたリンク</label>
-        <div class="out" id="out"></div>
-        <p class="note" id="kind"></p>
-        <div class="row">
-          <button class="btn" id="copy" type="button">コピーする</button>
-          <a class="btn sub" id="try" target="_blank" rel="noopener">試しに開く</a>
+<section id="maker">
+  <div class="wrap">
+    <div class="mark"><b>go.</b>lulinecast.jp</div>
+    <div class="hero rise">
+      <h1>押したら、<br><span>アプリ</span>で<br>開く。</h1>
+      <p>X・Instagram・TikTok に貼ったリンクから、ログイン済みの YouTube アプリへ。高評価も登録も、ひと押しで済みます。</p>
+    </div>
+
+    <form id="form" autocomplete="off" onsubmit="return false">
+      <label class="field">
+        <span>YouTube の URL</span>
+        <input id="src" type="url" inputmode="url" placeholder="youtu.be/… を貼る">
+      </label>
+      <p class="err" id="err">作れるのは YouTube・Instagram・X・Amazon・TikTok・LINE と、自社のサイトのリンクです。</p>
+      <label class="field">
+        <span>スタンプに出す言葉</span>
+        <input id="label" type="text" value="YouTube で見る" maxlength="24">
+      </label>
+      <button class="pill" id="make" type="button">リンクを作る
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </form>
+
+    <div id="result">
+      <div class="stage">
+        <div class="sticker" id="sticker">
+          <svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+          <span id="stickerText">YouTube で見る</span>
         </div>
-        <div id="qr"></div>
+        <small>ストーリーではこう見えます</small>
+      </div>
+
+      <div class="linkrow">
+        <code id="out"></code>
+        <div class="acts">
+          <button class="pill" id="copy" type="button">
+            <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>
+            <span>コピーする</span>
+          </button>
+          <a class="pill ghost" id="try" target="_blank" rel="noopener">試しに開く</a>
+        </div>
+        <p class="kind" id="kind"></p>
+      </div>
+
+      <div class="how">
+        <ol>
+          <li>上のリンクを<b>コピー</b>する</li>
+          <li>ストーリーの<b>リンクスタンプ</b>に貼る</li>
+          <li><b>スタンプのテキストをカスタマイズ</b>を押して「<span id="howLabel">YouTube で見る</span>」と入れる</li>
+        </ol>
+        <div>
+          <div id="qr"></div>
+          <div class="qrcap">QR でも開けます</div>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
+  <div class="wrap foot">YouTube・Instagram・X・Amazon・TikTok・LINE と自社サイトのリンクを作れます。</div>
+</section>
 
-  <section id="open" class="center">
-    <h1 id="openTitle">開いています</h1>
-    <p class="lead" id="openLead">少しお待ちください。</p>
-    <img id="thumb" alt="" style="display:none">
-    <div class="stack" id="openBtns" style="display:none">
-      <a class="btn" id="appBtn">アプリで開く</a>
-      <a class="btn sub" id="safariBtn" style="display:none">Safari を通して YouTube アプリで見る</a>
-      <a class="btn sub" id="webBtn">ブラウザで開く</a>
+<section id="open">
+  <div class="cover" id="cover">
+    <img id="thumb" alt="">
+    <div class="mark"><b>go.</b></div>
+  </div>
+  <div class="wrap">
+    <div class="meta rise" id="meta">
+      <div class="who" id="who"></div>
+      <h1 id="openTitle">開いています</h1>
     </div>
-  </section>
+    <p class="status" id="openLead">アプリを開いています</p>
+    <div class="bar" id="bar"><i></i></div>
+    <div class="go rise" id="openBtns">
+      <a class="pill" id="appBtn">
+        <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+        <span id="appBtnText">アプリで開く</span>
+      </a>
+      <a class="alt" id="safariBtn" style="display:none">Safari を通して YouTube アプリで見る</a>
+      <a class="alt" id="webBtn">ブラウザで開く</a>
+    </div>
+  </div>
+</section>
 
-</main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (function () {
@@ -88,9 +250,10 @@
   var isAndroid = /Android/.test(ua);
   var inLine = /\bLine\//i.test(ua);
   var inTikTok = /BytedanceWebview|musical_ly|TikTok/i.test(ua);
-  var inOtherApp =/Instagram|FBAN|FBAV|FB_IAB|BytedanceWebview|musical_ly|TikTok|Twitter/i.test(ua);
+  var inOtherApp = /Instagram|FBAN|FBAV|FB_IAB|BytedanceWebview|musical_ly|TikTok|Twitter/i.test(ua);
 
   var OWN_SITES = /(^|\.)(lulinecast\.jp|nakamuradental\.jp|forever-young\.jp)$/;
+  function $(id) { return document.getElementById(id); }
 
   // 開きたい URL を、どのアプリでどう開くかに変える
   function plan(raw) {
@@ -140,12 +303,16 @@
   if (!target && /^[\w-]{6,20}$/.test(params.get('y') || '')) target = 'https://www.youtube.com/watch?v=' + params.get('y');
 
   if (target) {
-    document.getElementById('maker').style.display = 'none';
-    document.getElementById('open').style.display = 'block';
+    $('maker').style.display = 'none';
+    $('open').style.display = 'block';
+    document.querySelector('.drift').style.display = 'none';
     var r = plan(target);
     if (!r) {
-      document.getElementById('openTitle').textContent = 'リンクが正しくありません';
-      document.getElementById('openLead').textContent = '作った人にもう一度リンクを確かめてもらってください。';
+      $('cover').style.display = 'none';
+      $('meta').className = 'meta plain rise';
+      $('openTitle').textContent = 'このリンクは開けません';
+      $('openLead').textContent = '作った人に、リンクをもう一度確かめてもらってください。';
+      $('bar').style.display = 'none';
       return;
     }
 
@@ -174,36 +341,56 @@
       else if (inOtherApp) app = 'x-safari-' + r.web; // Instagram などの中から Safari に出す
     }
 
-    document.getElementById('openLead').textContent =
-      r.name ? r.name + ' アプリで開いています。' : '普段のブラウザで開いています。';
-    document.getElementById('webBtn').href = r.web;
-    var appBtn = document.getElementById('appBtn');
+    $('who').textContent = r.name || '';
+    $('openTitle').textContent = r.name ? r.name + ' で開く' : '普段のブラウザで開く';
+    $('openLead').textContent = r.name ? r.name + ' アプリを開いています' : '普段のブラウザを開いています';
+    $('webBtn').href = r.web;
+    var appBtn = $('appBtn');
+    $('appBtnText').textContent = r.name ? r.name + ' アプリで見る' : '普段のブラウザで開く';
     if (app) appBtn.href = app; else appBtn.style.display = 'none';
-    if (!r.name) appBtn.textContent = '普段のブラウザで開く';
 
     if (!app) { location.replace(r.web); return; }
 
-    // YouTube はサムネイルと大きなボタンをすぐ出す（ストーリーの中では自動で開けないことがあるため）
     if (r.vid) {
-      var th = document.getElementById('thumb');
-      th.src = 'https://i.ytimg.com/vi/' + encodeURIComponent(r.vid) + '/hqdefault.jpg';
-      th.style.display = 'block';
-      document.getElementById('openTitle').textContent = 'YouTube で見る';
-      document.getElementById('openLead').textContent = '開かない時は、下のボタンを押してください。';
-      appBtn.textContent = 'YouTube アプリで見る';
-      document.getElementById('openBtns').style.display = 'block';
+      // サムネイルとタイトルを出す。ストーリーの中では自動で開けないことがあるので、ボタンもすぐ出す
+      var th = $('thumb');
+      th.onload = function () { th.className = 'on'; };
+      th.onerror = function () { if (th.src.indexOf('maxres') > 0) th.src = 'https://i.ytimg.com/vi/' + encodeURIComponent(r.vid) + '/hqdefault.jpg'; };
+      th.src = 'https://i.ytimg.com/vi/' + encodeURIComponent(r.vid) + '/maxresdefault.jpg';
+      $('openTitle').textContent = 'YouTube で見る';
+      $('appBtnText').textContent = 'YouTube アプリで見る';
+      $('openBtns').style.display = 'block';
+      try {
+        fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + r.vid))
+          .then(function (res) { return res.ok ? res.json() : null; })
+          .then(function (j) { if (j && j.title) { $('openTitle').textContent = j.title; $('who').textContent = j.author_name || 'YouTube'; } })
+          .catch(function () {});
+      } catch (e) {}
+    } else {
+      $('cover').style.display = 'none';
+      $('meta').className = 'meta plain rise';
+    }
+
+    // Instagram などのアプリの中では Web に切り替えず、押せるボタンを残す
+    var inInApp = inLine || inOtherApp;
+    if (r.name === 'YouTube' && isIOS && inInApp && !inTikTok) {
+      var sb = $('safariBtn');
+      sb.href = 'x-safari-' + location.href;
+      sb.style.display = 'block';
+    }
+
+    // 画面の確認用：&preview を付けると開かずに画面だけ見せる
+    if (params.has('preview')) {
+      $('openLead').textContent = '開かない時は、下のボタンを押してください';
+      $('bar').style.display = 'none';
+      $('openBtns').style.display = 'block';
+      if (isIOS || !isAndroid) $('safariBtn').style.display = 'block';
+      return;
     }
 
     var left = false, start = Date.now();
     document.addEventListener('visibilitychange', function () { if (document.hidden) left = true; });
     location.href = app;
-    // Instagram などのアプリの中では Web に切り替えず、押せるボタンを残す
-    var inInApp = inLine || inOtherApp;
-    if (r.name === 'YouTube' && isIOS && inInApp && !inTikTok) {
-      var sb = document.getElementById('safariBtn');
-      sb.href = 'x-safari-' + location.href;
-      sb.style.display = 'block';
-    }
     // アプリの外では URLgenius と同じく、すぐ戻ってきた＝アプリが無いとみて Web のページへ
     if (r.name === 'YouTube' && !inInApp && app.indexOf('x-safari-') !== 0) {
       setTimeout(function () {
@@ -211,24 +398,30 @@
       }, 1000);
     }
     setTimeout(function () {
+      $('openLead').textContent = '開かない時は、下のボタンを押してください';
+      $('bar').style.display = 'none';
       if (left || r.vid) return;
-      document.getElementById('openTitle').textContent = 'うまく開かない時は';
-      document.getElementById('openLead').textContent = '下のボタンを押してください。';
-      document.getElementById('openBtns').style.display = 'block';
+      $('openBtns').style.display = 'block';
     }, 1500);
     return;
   }
 
   // 作る画面
-  var src = document.getElementById('src');
+  var src = $('src'), label = $('label');
+  function syncLabel() {
+    var t = label.value.trim() || 'YouTube で見る';
+    $('stickerText').textContent = t; $('howLabel').textContent = t;
+  }
+  label.addEventListener('input', syncLabel);
+
   function make() {
     var v = src.value.trim();
     if (v && !/^https?:\/\//i.test(v)) v = 'https://' + v;
     var r = plan(v);
-    var err = document.getElementById('err');
+    var err = $('err');
     if (!r) {
       err.style.display = v ? 'block' : 'none';
-      document.getElementById('result').style.display = 'none';
+      $('result').style.display = 'none';
       src.focus(); return;
     }
     err.style.display = 'none';
@@ -236,22 +429,27 @@
     var link = r.vid && /^[\w-]{6,20}$/.test(r.vid) && !r.web.match(/\/shorts\//)
       ? base + '?y=' + r.vid
       : base + '?u=' + encodeURIComponent(r.web);
-    document.getElementById('out').textContent = link;
-    document.getElementById('try').href = link;
-    document.getElementById('kind').textContent = r.name
+    $('out').textContent = link;
+    $('try').href = link;
+    $('kind').textContent = r.name
       ? 'スマホでは ' + r.name + ' アプリで開きます。アプリが無ければ普段のブラウザで開きます。'
       : 'LINE や Instagram の中で押されても、普段のブラウザで開きます。';
-    document.getElementById('result').style.display = 'block';
-    var qr = document.getElementById('qr'); qr.innerHTML = '';
-    if (window.QRCode) new QRCode(qr, { text: link, width: 360, height: 360, correctLevel: QRCode.CorrectLevel.M });
+    syncLabel();
+    var res = $('result');
+    res.style.display = 'block';
+    var st = $('sticker');
+    st.classList.remove('slap'); void st.offsetWidth; st.classList.add('slap');
+    var qr = $('qr'); qr.innerHTML = '';
+    if (window.QRCode) new QRCode(qr, { text: link, width: 224, height: 224, correctLevel: QRCode.CorrectLevel.M });
+    setTimeout(function () { res.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
   }
-  document.getElementById('make').addEventListener('click', make);
+  $('make').addEventListener('click', make);
   src.addEventListener('keydown', function (e) { if (e.key === 'Enter') make(); });
-  document.getElementById('copy').addEventListener('click', function () {
-    var t = document.getElementById('out').textContent, b = this;
+  $('copy').addEventListener('click', function () {
+    var t = $('out').textContent, s = this.querySelector('span');
     navigator.clipboard.writeText(t).then(function () {
-      b.textContent = 'コピーしました';
-      setTimeout(function () { b.textContent = 'コピーする'; }, 1500);
+      s.textContent = 'コピーしました';
+      setTimeout(function () { s.textContent = 'コピーする'; }, 1600);
     });
   });
 })();
