@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>アプリで開くリンク</title>
+<style>
+  :root {
+    --bg: #f6f7f8; --surface: #fff; --text: #1f2328; --muted: #656d76;
+    --line: #d8dee4; --accent: #1f6f4a; --accent-text: #fff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    line-height: 1.7; -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 560px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 6px; }
+  .lead { color: var(--muted); font-size: 14px; margin: 0 0 24px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  input[type=url], .out {
+    width: 100%; font: inherit; font-size: 15px; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--text);
+  }
+  .out { word-break: break-all; font-size: 13px; background: var(--bg); }
+  .btn {
+    display: block; width: 100%; text-align: center; text-decoration: none;
+    font: inherit; font-size: 16px; font-weight: 600; padding: 12px; border-radius: 6px;
+    border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); cursor: pointer;
+  }
+  .btn.sub { background: #fff; color: var(--accent); }
+  .row { display: flex; gap: 8px; margin-top: 12px; }
+  .row .btn { flex: 1; }
+  .note { font-size: 14px; color: var(--muted); margin: 12px 0 0; }
+  #result { margin-top: 20px; display: none; }
+  #qr { margin-top: 16px; display: flex; justify-content: center; }
+  #qr img, #qr canvas { width: 180px; height: 180px; }
+  .stack > * + * { margin-top: 10px; }
+  .center { text-align: center; }
+  #open { display: none; }
+</style>
+</head>
+<body>
+<main>
+
+  <section id="maker">
+    <h1>アプリで開くリンクを作る</h1>
+    <p class="lead">LINE や Instagram の中で押されても、アプリか普段のブラウザで開くリンクに変えます。</p>
+    <div class="card">
+      <label for="src">開きたいページの URL</label>
+      <input id="src" type="url" inputmode="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off">
+      <div class="row"><button class="btn" id="make" type="button">リンクを作る</button></div>
+      <div id="result">
+        <label>できたリンク</label>
+        <div class="out" id="out"></div>
+        <p class="note" id="kind"></p>
+        <div class="row">
+          <button class="btn" id="copy" type="button">コピーする</button>
+          <a class="btn sub" id="try" target="_blank" rel="noopener">試しに開く</a>
+        </div>
+        <div id="qr"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="open" class="center">
+    <h1 id="openTitle">開いています</h1>
+    <p class="lead" id="openLead">少しお待ちください。</p>
+    <div class="stack" id="openBtns" style="display:none">
+      <a class="btn" id="appBtn">アプリで開く</a>
+      <a class="btn sub" id="webBtn">ブラウザで開く</a>
+    </div>
+  </section>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function () {
+  var ua = navigator.userAgent;
+  var isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/.test(ua);
+  var inLine = /\bLine\//i.test(ua);
+  var inOtherApp = /Instagram|FBAN|FBAV|FB_IAB|BytedanceWebview|musical_ly|TikTok|Twitter/i.test(ua);
+
+  // 開きたい URL を、どのアプリでどう開くかに変える
+  function plan(raw) {
+    var u;
+    try { u = new URL(raw); } catch (e) { return null; }
+    if (!/^https?:$/.test(u.protocol)) return null;
+    var host = u.hostname.replace(/^(www\.|m\.|mobile\.)/, '');
+    var path = u.pathname, seg = path.split('/').filter(Boolean);
+    var r = { web: u.href, name: null, ios: null, pkg: null, aPath: u.host + u.pathname + u.search };
+
+    if (host === 'youtube.com' || host === 'youtu.be') {
+      r.name = 'YouTube'; r.pkg = 'com.google.android.youtube';
+      var p = host === 'youtu.be' ? '/watch?v=' + seg[0] : path + u.search;
+      r.ios = 'youtube://www.youtube.com' + p;
+      r.aPath = 'www.youtube.com' + p;
+    } else if (host === 'instagram.com') {
+      r.name = 'Instagram'; r.pkg = 'com.instagram.android';
+      if (seg.length === 1) r.ios = 'instagram://user?username=' + encodeURIComponent(seg[0]);
+    } else if (host === 'x.com' || host === 'twitter.com') {
+      r.name = 'X'; r.pkg = 'com.twitter.android';
+      if (seg[1] === 'status' && seg[2]) r.ios = 'twitter://status?id=' + seg[2];
+      else if (seg.length === 1) r.ios = 'twitter://user?screen_name=' + encodeURIComponent(seg[0]);
+    } else if (/(^|\.)amazon\.co\.jp$|(^|\.)amazon\.com$|^amzn\.(asia|to)$/.test(host)) {
+      r.name = 'Amazon'; r.pkg = 'com.amazon.mShop.android.shopping';
+      r.ios = 'com.amazon.mobile.shopping.web://' + u.host + u.pathname + u.search;
+    } else if (host === 'tiktok.com' || /\.tiktok\.com$/.test(host)) {
+      r.name = 'TikTok'; r.pkg = 'com.zhiliaoapp.musically';
+    } else if (host === 'line.me' || host === 'lin.ee') {
+      r.name = 'LINE'; r.pkg = 'jp.naver.line.android';
+    }
+    return r;
+  }
+
+  function androidIntent(r, pkg) {
+    return 'intent://' + r.aPath + '#Intent;scheme=https;' + (pkg ? 'package=' + pkg + ';' : '') +
+      'S.browser_fallback_url=' + encodeURIComponent(r.web) + ';end';
+  }
+
+  var params = new URLSearchParams(location.search);
+  var target = params.get('u');
+
+  if (target) {
+    document.getElementById('maker').style.display = 'none';
+    document.getElementById('open').style.display = 'block';
+    var r = plan(target);
+    if (!r) {
+      document.getElementById('openTitle').textContent = 'リンクが正しくありません';
+      document.getElementById('openLead').textContent = '作った人にもう一度リンクを確かめてもらってください。';
+      return;
+    }
+
+    // LINE の中なら、まず普段のブラウザに出す（LINE が対応している公式の方法）
+    if (inLine && !params.has('openExternalBrowser')) {
+      location.replace(location.href + '&openExternalBrowser=1');
+      return;
+    }
+
+    var app = null;
+    if (isAndroid) {
+      // アプリが無ければ Chrome、それも無ければ元のページへ
+      app = androidIntent(r, r.pkg || (inOtherApp ? 'com.android.chrome' : null));
+      if (!r.pkg && !inOtherApp) app = null;
+    } else if (isIOS) {
+      if (r.ios) app = r.ios;
+      else if (inOtherApp) app = 'x-safari-' + r.web; // Instagram などの中から Safari に出す
+    }
+
+    document.getElementById('openLead').textContent =
+      r.name ? r.name + ' アプリで開いています。' : '普段のブラウザで開いています。';
+    document.getElementById('webBtn').href = r.web;
+    var appBtn = document.getElementById('appBtn');
+    if (app) appBtn.href = app; else appBtn.style.display = 'none';
+    if (!r.name) appBtn.textContent = '普段のブラウザで開く';
+
+    if (!app) { location.replace(r.web); return; }
+
+    var left = false;
+    document.addEventListener('visibilitychange', function () { if (document.hidden) left = true; });
+    location.href = app;
+    setTimeout(function () {
+      if (left) return;
+      document.getElementById('openTitle').textContent = 'うまく開かない時は';
+      document.getElementById('openLead').textContent = '下のボタンを押してください。';
+      document.getElementById('openBtns').style.display = 'block';
+    }, 1500);
+    return;
+  }
+
+  // 作る画面
+  var src = document.getElementById('src');
+  function make() {
+    var v = src.value.trim();
+    if (v && !/^https?:\/\//i.test(v)) v = 'https://' + v;
+    var r = plan(v);
+    if (!r) { src.focus(); return; }
+    var link = location.origin + location.pathname + '?u=' + encodeURIComponent(r.web);
+    document.getElementById('out').textContent = link;
+    document.getElementById('try').href = link;
+    document.getElementById('kind').textContent = r.name
+      ? 'スマホでは ' + r.name + ' アプリで開きます。アプリが無ければ普段のブラウザで開きます。'
+      : 'LINE や Instagram の中で押されても、普段のブラウザで開きます。';
+    document.getElementById('result').style.display = 'block';
+    var qr = document.getElementById('qr'); qr.innerHTML = '';
+    if (window.QRCode) new QRCode(qr, { text: link, width: 360, height: 360, correctLevel: QRCode.CorrectLevel.M });
+  }
+  document.getElementById('make').addEventListener('click', make);
+  src.addEventListener('keydown', function (e) { if (e.key === 'Enter') make(); });
+  document.getElementById('copy').addEventListener('click', function () {
+    var t = document.getElementById('out').textContent, b = this;
+    navigator.clipboard.writeText(t).then(function () {
+      b.textContent = 'コピーしました';
+      setTimeout(function () { b.textContent = 'コピーする'; }, 1500);
+    });
+  });
+})();
+</script>
+</body>
+</html>
