@@ -100,13 +100,16 @@
 
   .linkrow { margin-top: 36px; }
   .linkrow code {
-    display: block; font-family: "JetBrains Mono", monospace; font-size: 15px; word-break: break-all;
+    display: block; font-family: "JetBrains Mono", monospace; font-size: 13.5px; letter-spacing: -.02em; word-break: break-all;
     color: var(--accent); padding-bottom: 14px;
   }
   .linkrow .acts { display: flex; gap: 10px; flex-wrap: wrap; }
   .kind { font-size: 14px; color: var(--muted); margin: 18px 0 0; }
 
-  .how { margin-top: 64px; display: grid; grid-template-columns: 1fr 132px; gap: 28px; align-items: start; }
+  .how { margin-top: 64px; display: grid; grid-template-columns: 1fr; gap: 26px; }
+  .how .qrwrap { display: flex; align-items: center; gap: 16px; }
+  .how .qrwrap .qrcap { margin: 0; text-align: left; }
+  @media (min-width: 560px) { .how { grid-template-columns: 1fr 132px; } .how .qrwrap { display: block; } .how .qrwrap .qrcap { margin-top: 6px; text-align: center; } }
   .how ol { margin: 0; padding: 0; list-style: none; counter-reset: s; font-size: 15px; }
   .how li { counter-increment: s; padding: 0 0 14px 34px; position: relative; }
   .how li::before {
@@ -209,7 +212,7 @@
           <li>ストーリーの<b>リンクスタンプ</b>に貼る</li>
           <li><b>スタンプのテキストをカスタマイズ</b>を押して「<span id="howLabel">YouTube で見る</span>」と入れる</li>
         </ol>
-        <div>
+        <div class="qrwrap">
           <div id="qr"></div>
           <div class="qrcap">QR でも開けます</div>
         </div>
