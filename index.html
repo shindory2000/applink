@@ -385,6 +385,10 @@
       $('bar').style.display = 'none';
       $('openBtns').style.display = 'block';
       if (isIOS || !isAndroid) $('safariBtn').style.display = 'block';
+      setTimeout(function () {
+        if (document.getAnimations) document.getAnimations().forEach(function (a) { a.finish(); });
+        $('thumb').style.transition = 'none'; $('thumb').className = 'on';
+      }, 1800);
       return;
     }
 
