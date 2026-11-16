@@ -4,248 +4,107 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#141310">
-<title>go. アプリで開くリンク</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#f5f6f5">
+<title>アプリで開くリンク</title>
 <style>
   :root {
-    --ground: #141310;
-    --ground-2: #1d1c17;
-    --text: #f1f0ea;
-    --muted: rgba(241, 240, 234, .58);
-    --faint: rgba(241, 240, 234, .14);
-    --accent: #e4ff3d;
-    --on-accent: #141310;
-    --danger: #ff8a7a;
+    --bg: #f5f6f5; --surface: #fff; --text: #1d2420; --muted: #67706b;
+    --line: #dfe3e0; --accent: #1f6f4a; --accent-soft: #e9f2ed; --danger: #b42318;
     --ease: cubic-bezier(0.19, 1, 0.22, 1);
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body {
-    margin: 0; min-height: 100svh; background: var(--ground); color: var(--text);
-    font-family: "Zen Kaku Gothic New", "Hiragino Sans", sans-serif;
-    line-height: 1.7; overflow-x: hidden;
+    margin: 0; min-height: 100svh; background: var(--bg); color: var(--text);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    line-height: 1.6;
   }
   a { color: inherit; }
-  .wrap { max-width: 620px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
 
-  /* 背景をゆっくり流れる薄い大きな文字 */
-  .drift {
-    position: fixed; inset: auto 0 6vh 0; z-index: 0; pointer-events: none;
-    font-weight: 900; font-size: 34vh; line-height: 1; white-space: nowrap;
-    color: var(--text); opacity: .035; letter-spacing: -.04em;
-    animation: drift 60s linear infinite;
+  /* 作る画面：箱ひとつ */
+  #maker { max-width: 520px; margin: 0 auto; padding: 32px 16px; }
+  .box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+  .box label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+  #src {
+    width: 100%; font: inherit; font-size: 16px; color: var(--text);
+    padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; outline: none;
+    transition: border-color .4s var(--ease), box-shadow .4s var(--ease);
   }
-  @keyframes drift { to { transform: translateX(-50%); } }
+  #src:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .err { margin: 10px 0 0; font-size: 13px; color: var(--danger); display: none; }
 
-  .mark { display: flex; align-items: baseline; gap: 10px; padding: 22px 0 0; font-size: 13px; color: var(--muted); }
-  .mark b { font-family: "JetBrains Mono", monospace; font-size: 22px; color: var(--accent); letter-spacing: -.04em; }
+  #result { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+  #result.show { display: block; animation: in .6s var(--ease) both; }
+  @keyframes in { from { opacity: 0; transform: translateY(6px); } }
+  .row { display: flex; gap: 8px; align-items: stretch; }
+  #out {
+    flex: 1; min-width: 0; font-size: 14px; padding: 11px 12px; border-radius: 8px;
+    background: var(--bg); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font: inherit; font-size: 15px; font-weight: 600; white-space: nowrap; text-decoration: none;
+    padding: 0 18px; min-height: 44px; border-radius: 8px; border: 1px solid var(--accent);
+    background: var(--accent); color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: transform .35s var(--ease), background .35s var(--ease);
+  }
+  .btn:active { transform: scale(.96); }
+  .btn.done { background: var(--accent-soft); color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .kind { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
 
-  /* 作る画面 */
-  .hero { padding: 13vh 0 0; }
-  .hero h1 {
-    margin: 0; font-weight: 900; letter-spacing: -.035em;
-    font-size: clamp(60px, 18vw, 128px); line-height: .9;
+  /* 押した人の画面：ロードだけ */
+  #open { display: none; min-height: 100svh; align-items: center; justify-content: center; flex-direction: column; padding: 24px 16px; text-align: center; }
+  .pop {
+    font-family: ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN", sans-serif;
+    font-size: 56px; font-weight: 800; letter-spacing: -.04em; line-height: 1; color: var(--accent);
+    animation: pop .7s var(--ease) both;
   }
-  .hero h1 span { color: var(--accent); }
-  .hero p { margin: 28px 0 0; max-width: 25em; font-size: 15px; color: var(--muted); }
+  .pop i { display: inline-block; font-style: normal; animation: hop .9s .5s cubic-bezier(.3, 0, .2, 1) infinite; }
+  @keyframes pop { 0% { transform: scale(.3); opacity: 0; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); } }
+  @keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-16px); } }
+  #openTitle { margin: 18px 0 0; font-size: 15px; font-weight: 600; }
+  #openLead { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+  #openBtns { display: none; margin-top: 22px; width: 100%; max-width: 320px; }
+  #openBtns.show { display: block; animation: in .6s var(--ease) both; }
+  #openBtns .btn { width: 100%; }
+  #openBtns .alt { display: block; margin-top: 12px; font-size: 13px; color: var(--muted); }
 
-  form { margin-top: 18vh; }
-  .field { display: block; margin-bottom: 30px; }
-  .field span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 2px; }
-  .field input {
-    width: 100%; font: inherit; font-size: 20px; font-weight: 700; color: var(--text);
-    background: transparent; border: 0; border-bottom: 2px solid var(--faint);
-    padding: 8px 0 10px; border-radius: 0; outline: none;
-    transition: border-color .6s var(--ease);
-  }
-  .field input::placeholder { color: rgba(241, 240, 234, .28); font-weight: 400; }
-  .field input:focus { border-color: var(--accent); }
-  .err { margin: -14px 0 24px; font-size: 14px; color: var(--danger); display: none; }
-
-  .pill {
-    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-    font: inherit; font-size: 17px; font-weight: 700; text-decoration: none;
-    background: var(--accent); color: var(--on-accent); border: 0; border-radius: 999px;
-    padding: 17px 30px; cursor: pointer; -webkit-tap-highlight-color: transparent;
-    transition: transform .5s var(--ease);
-  }
-  .pill:active { transform: scale(.95); }
-  .pill.ghost { background: transparent; color: var(--text); box-shadow: inset 0 0 0 1.5px var(--faint); }
-  .pill svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-
-  /* できたリンク：スタンプが貼られる */
-  #result { display: none; margin-top: 16vh; padding-bottom: 12vh; }
-  .stage { position: relative; height: 230px; display: flex; align-items: center; justify-content: center; }
-  .stage::before {
-    content: ""; position: absolute; inset: 0; border-radius: 28px;
-    background: var(--ground-2);
-  }
-  .sticker {
-    position: relative; display: inline-flex; align-items: center; gap: 12px;
-    background: #fff; color: #141310; border-radius: 999px; padding: 16px 28px 16px 22px;
-    font-size: 24px; font-weight: 700; letter-spacing: -.01em;
-    transform: rotate(-5deg);
-    box-shadow: 0 22px 44px -12px rgba(5, 5, 3, .7);
-  }
-  .sticker svg { width: 26px; height: 26px; stroke: #2a7cff; fill: none; stroke-width: 2.2; stroke-linecap: round; }
-  .slap { animation: slap .9s var(--ease) both; }
-  @keyframes slap {
-    0% { opacity: 0; transform: translateY(-30px) scale(1.5) rotate(-18deg); }
-    100% { opacity: 1; transform: translateY(0) scale(1) rotate(-5deg); }
-  }
-  .stage small { position: absolute; left: 20px; bottom: 14px; font-size: 12px; color: var(--muted); }
-
-  .linkrow { margin-top: 36px; }
-  .linkrow code {
-    display: block; font-family: "JetBrains Mono", monospace; font-size: 13.5px; letter-spacing: -.02em; word-break: break-all;
-    color: var(--accent); padding-bottom: 14px;
-  }
-  .linkrow .acts { display: flex; gap: 10px; flex-wrap: wrap; }
-  .kind { font-size: 14px; color: var(--muted); margin: 18px 0 0; }
-
-  .how { margin-top: 64px; display: grid; grid-template-columns: 1fr; gap: 26px; }
-  .how .qrwrap { display: flex; align-items: center; gap: 16px; }
-  .how .qrwrap .qrcap { margin: 0; text-align: left; }
-  @media (min-width: 560px) { .how { grid-template-columns: 1fr 132px; } .how .qrwrap { display: block; } .how .qrwrap .qrcap { margin-top: 6px; text-align: center; } }
-  .how ol { margin: 0; padding: 0; list-style: none; counter-reset: s; font-size: 15px; }
-  .how li { counter-increment: s; padding: 0 0 14px 34px; position: relative; }
-  .how li::before {
-    content: counter(s); position: absolute; left: 0; top: -2px;
-    font-family: "JetBrains Mono", monospace; font-size: 18px; color: var(--accent);
-  }
-  .how li b { font-weight: 700; }
-  #qr { background: #fff; padding: 10px; border-radius: 10px; width: 132px; }
-  #qr img, #qr canvas { display: block; width: 112px !important; height: 112px !important; }
-  .qrcap { font-size: 12px; color: var(--muted); margin-top: 6px; text-align: center; }
-
-  .foot { padding: 0 0 40px; font-size: 12px; color: var(--muted); }
-
-  /* 押した人が見る画面 */
-  #open { display: none; min-height: 100svh; }
-  .cover { position: relative; height: 54svh; overflow: hidden; }
-  .cover img {
-    width: 100%; height: 100%; object-fit: cover; display: block;
-    -webkit-mask-image: linear-gradient(#000 45%, transparent);
-    mask-image: linear-gradient(#000 45%, transparent);
-    transform: scale(1.08); opacity: 0;
-    transition: transform 1.6s var(--ease), opacity 1.2s var(--ease);
-  }
-  .cover img.on { transform: scale(1); opacity: 1; }
-  .cover .mark { position: absolute; left: 20px; top: 0; }
-  .meta { margin-top: -12svh; position: relative; }
-  .meta .who { font-size: 13px; color: var(--accent); font-weight: 700; }
-  .meta h1 {
-    margin: 6px 0 0; font-size: clamp(26px, 7.4vw, 40px); line-height: 1.12; font-weight: 900; letter-spacing: -.02em;
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-  }
-  .meta.plain { margin-top: 26svh; }
-  .meta.plain h1 { font-size: clamp(44px, 13vw, 76px); line-height: .95; }
-  .go { margin-top: 34px; }
-  .go .pill { width: 100%; padding: 20px; font-size: 18px; }
-  .go .alt { display: block; margin-top: 18px; text-align: center; font-size: 14px; color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
-  .status { margin: 34px 0 0; font-size: 13px; color: var(--muted); }
-  .bar { height: 2px; background: var(--faint); margin-top: 10px; overflow: hidden; border-radius: 2px; }
-  .bar i { display: block; height: 100%; width: 0; background: var(--accent); animation: draw 1.4s var(--ease) forwards; }
-  @keyframes draw { to { width: 100%; } }
-  #openBtns { display: none; }
-  .rise { animation: rise 1s var(--ease) both; }
-  @keyframes rise { from { opacity: 0; transform: translateY(18px); } }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, .drift { animation: none !important; transition: none !important; }
-  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
-<div class="drift" aria-hidden="true">押したら、アプリ。押したら、アプリ。</div>
 
 <section id="maker">
-  <div class="wrap">
-    <div class="mark"><b>go.</b>lulinecast.jp</div>
-    <div class="hero rise">
-      <h1>押したら、<br><span>アプリ</span>で<br>開く。</h1>
-      <p>X・Instagram・TikTok に貼ったリンクから、ログイン済みの YouTube アプリへ。高評価も登録も、ひと押しで済みます。</p>
-    </div>
-
-    <form id="form" autocomplete="off" onsubmit="return false">
-      <label class="field">
-        <span>YouTube の URL</span>
-        <input id="src" type="url" inputmode="url" placeholder="youtu.be/… を貼る">
-      </label>
-      <p class="err" id="err">作れるのは YouTube・Instagram・X・Amazon・TikTok・LINE と、自社のサイトのリンクです。</p>
-      <label class="field">
-        <span>スタンプに出す言葉</span>
-        <input id="label" type="text" value="YouTube で見る" maxlength="24">
-      </label>
-      <button class="pill" id="make" type="button">リンクを作る
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </button>
-    </form>
-
+  <div class="box">
+    <label for="src">リンクを貼る</label>
+    <input id="src" type="url" inputmode="url" placeholder="https://youtu.be/…" autocomplete="off">
+    <p class="err" id="err">作れるのは YouTube・Instagram・X・Amazon・TikTok・LINE と、自社サイトのリンクです。</p>
     <div id="result">
-      <div class="stage">
-        <div class="sticker" id="sticker">
-          <svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
-          <span id="stickerText">YouTube で見る</span>
-        </div>
-        <small>ストーリーではこう見えます</small>
+      <div class="row">
+        <div id="out"></div>
+        <button class="btn" id="copy" type="button">
+          <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>
+          <span>コピー</span>
+        </button>
       </div>
-
-      <div class="linkrow">
-        <code id="out"></code>
-        <div class="acts">
-          <button class="pill" id="copy" type="button">
-            <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>
-            <span>コピーする</span>
-          </button>
-          <a class="pill ghost" id="try" target="_blank" rel="noopener">試しに開く</a>
-        </div>
-        <p class="kind" id="kind"></p>
-      </div>
-
-      <div class="how">
-        <ol>
-          <li>上のリンクを<b>コピー</b>する</li>
-          <li>ストーリーの<b>リンクスタンプ</b>に貼る</li>
-          <li><b>スタンプのテキストをカスタマイズ</b>を押して「<span id="howLabel">YouTube で見る</span>」と入れる</li>
-        </ol>
-        <div class="qrwrap">
-          <div id="qr"></div>
-          <div class="qrcap">QR でも開けます</div>
-        </div>
-      </div>
+      <p class="kind" id="kind"></p>
     </div>
   </div>
-  <div class="wrap foot">YouTube・Instagram・X・Amazon・TikTok・LINE と自社サイトのリンクを作れます。</div>
 </section>
 
 <section id="open">
-  <div class="cover" id="cover">
-    <img id="thumb" alt="">
-    <div class="mark"><b>go.</b></div>
-  </div>
-  <div class="wrap">
-    <div class="meta rise" id="meta">
-      <div class="who" id="who"></div>
-      <h1 id="openTitle">開いています</h1>
-    </div>
-    <p class="status" id="openLead">アプリを開いています</p>
-    <div class="bar" id="bar"><i></i></div>
-    <div class="go rise" id="openBtns">
-      <a class="pill" id="appBtn">
-        <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>
-        <span id="appBtnText">アプリで開く</span>
-      </a>
-      <a class="alt" id="safariBtn" style="display:none">Safari を通して YouTube アプリで見る</a>
-      <a class="alt" id="webBtn">ブラウザで開く</a>
-    </div>
+  <div class="pop" aria-hidden="true">go<i>.</i></div>
+  <p id="openTitle">開いています</p>
+  <p id="openLead"></p>
+  <div id="openBtns">
+    <a class="btn" id="appBtn">アプリで開く</a>
+    <a class="alt" id="safariBtn" style="display:none">Safari を通して開く</a>
+    <a class="alt" id="webBtn">ブラウザで開く</a>
   </div>
 </section>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (function () {
   var ua = navigator.userAgent;
@@ -307,15 +166,12 @@
 
   if (target) {
     $('maker').style.display = 'none';
-    $('open').style.display = 'block';
-    document.querySelector('.drift').style.display = 'none';
+    $('open').style.display = 'flex';
     var r = plan(target);
     if (!r) {
-      $('cover').style.display = 'none';
-      $('meta').className = 'meta plain rise';
+      document.querySelector('.pop').style.display = 'none';
       $('openTitle').textContent = 'このリンクは開けません';
-      $('openLead').textContent = '作った人に、リンクをもう一度確かめてもらってください。';
-      $('bar').style.display = 'none';
+      $('openLead').textContent = '作った人にリンクを確かめてもらってください';
       return;
     }
 
@@ -344,35 +200,13 @@
       else if (inOtherApp) app = 'x-safari-' + r.web; // Instagram などの中から Safari に出す
     }
 
-    $('who').textContent = r.name || '';
-    $('openTitle').textContent = r.name ? r.name + ' で開く' : '普段のブラウザで開く';
-    $('openLead').textContent = r.name ? r.name + ' アプリを開いています' : '普段のブラウザを開いています';
+    $('openTitle').textContent = r.name ? r.name + ' を開いています' : 'ブラウザを開いています';
     $('webBtn').href = r.web;
     var appBtn = $('appBtn');
-    $('appBtnText').textContent = r.name ? r.name + ' アプリで見る' : '普段のブラウザで開く';
+    appBtn.textContent = r.name ? r.name + ' アプリで開く' : 'ブラウザで開く';
     if (app) appBtn.href = app; else appBtn.style.display = 'none';
 
     if (!app) { location.replace(r.web); return; }
-
-    if (r.vid) {
-      // サムネイルとタイトルを出す。ストーリーの中では自動で開けないことがあるので、ボタンもすぐ出す
-      var th = $('thumb');
-      th.onload = function () { th.className = 'on'; };
-      th.onerror = function () { if (th.src.indexOf('maxres') > 0) th.src = 'https://i.ytimg.com/vi/' + encodeURIComponent(r.vid) + '/hqdefault.jpg'; };
-      th.src = 'https://i.ytimg.com/vi/' + encodeURIComponent(r.vid) + '/maxresdefault.jpg';
-      $('openTitle').textContent = 'YouTube で見る';
-      $('appBtnText').textContent = 'YouTube アプリで見る';
-      $('openBtns').style.display = 'block';
-      try {
-        fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + r.vid))
-          .then(function (res) { return res.ok ? res.json() : null; })
-          .then(function (j) { if (j && j.title) { $('openTitle').textContent = j.title; $('who').textContent = j.author_name || 'YouTube'; } })
-          .catch(function () {});
-      } catch (e) {}
-    } else {
-      $('cover').style.display = 'none';
-      $('meta').className = 'meta plain rise';
-    }
 
     // Instagram などのアプリの中では Web に切り替えず、押せるボタンを残す
     var inInApp = inLine || inOtherApp;
@@ -382,16 +216,17 @@
       sb.style.display = 'block';
     }
 
+    function showButtons() {
+      $('openLead').textContent = '開かない時は下のボタンを押してください';
+      $('openBtns').className = 'show';
+    }
+
     // 画面の確認用：&preview を付けると開かずに画面だけ見せる
     if (params.has('preview')) {
-      $('openLead').textContent = '開かない時は、下のボタンを押してください';
-      $('bar').style.display = 'none';
-      $('openBtns').style.display = 'block';
-      if (isIOS || !isAndroid) $('safariBtn').style.display = 'block';
-      setTimeout(function () {
-        if (document.getAnimations) document.getAnimations().forEach(function (a) { a.finish(); });
-        $('thumb').style.transition = 'none'; $('thumb').className = 'on';
-      }, 1800);
+      if (params.get('preview') === 'buttons') {
+        if (!isAndroid) $('safariBtn').style.display = 'block';
+        showButtons();
+      }
       return;
     }
 
@@ -404,59 +239,38 @@
         if (!left && !document.hidden && Date.now() - start < 5000) location.replace(r.web);
       }, 1000);
     }
-    setTimeout(function () {
-      $('openLead').textContent = '開かない時は、下のボタンを押してください';
-      $('bar').style.display = 'none';
-      if (left || r.vid) return;
-      $('openBtns').style.display = 'block';
-    }, 1500);
+    // 開けなかった時だけ、少ししてボタンを出す
+    setTimeout(function () { if (!left) showButtons(); }, 1500);
     return;
   }
 
-  // 作る画面
-  var src = $('src'), label = $('label');
-  function syncLabel() {
-    var t = label.value.trim() || 'YouTube で見る';
-    $('stickerText').textContent = t; $('howLabel').textContent = t;
-  }
-  label.addEventListener('input', syncLabel);
-
+  // 作る画面：貼ったらすぐリンクができる
+  var src = $('src');
   function make() {
     var v = src.value.trim();
     if (v && !/^https?:\/\//i.test(v)) v = 'https://' + v;
-    var r = plan(v);
-    var err = $('err');
-    if (!r) {
-      err.style.display = v ? 'block' : 'none';
-      $('result').style.display = 'none';
-      src.focus(); return;
-    }
-    err.style.display = 'none';
+    var r = v ? plan(v) : null;
+    var res = $('result');
+    $('err').style.display = v && !r ? 'block' : 'none';
+    if (!r) { res.className = ''; return; }
     var base = location.origin + location.pathname;
     var link = r.vid && /^[\w-]{6,20}$/.test(r.vid) && !r.web.match(/\/shorts\//)
       ? base + '?y=' + r.vid
       : base + '?u=' + encodeURIComponent(r.web);
+    if ($('out').textContent === link && res.className === 'show') return;
     $('out').textContent = link;
-    $('try').href = link;
     $('kind').textContent = r.name
-      ? 'スマホでは ' + r.name + ' アプリで開きます。アプリが無ければ普段のブラウザで開きます。'
-      : 'LINE や Instagram の中で押されても、普段のブラウザで開きます。';
-    syncLabel();
-    var res = $('result');
-    res.style.display = 'block';
-    var st = $('sticker');
-    st.classList.remove('slap'); void st.offsetWidth; st.classList.add('slap');
-    var qr = $('qr'); qr.innerHTML = '';
-    if (window.QRCode) new QRCode(qr, { text: link, width: 224, height: 224, correctLevel: QRCode.CorrectLevel.M });
-    setTimeout(function () { res.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+      ? 'スマホでは ' + r.name + ' アプリで開きます'
+      : 'アプリの中で押されても、普段のブラウザで開きます';
+    res.className = ''; void res.offsetWidth; res.className = 'show';
   }
-  $('make').addEventListener('click', make);
-  src.addEventListener('keydown', function (e) { if (e.key === 'Enter') make(); });
+  src.addEventListener('input', make);
+  src.addEventListener('paste', function () { setTimeout(make, 0); });
   $('copy').addEventListener('click', function () {
-    var t = $('out').textContent, s = this.querySelector('span');
-    navigator.clipboard.writeText(t).then(function () {
-      s.textContent = 'コピーしました';
-      setTimeout(function () { s.textContent = 'コピーする'; }, 1600);
+    var b = this, s = b.querySelector('span');
+    navigator.clipboard.writeText($('out').textContent).then(function () {
+      s.textContent = 'コピーしました'; b.classList.add('done');
+      setTimeout(function () { s.textContent = 'コピー'; b.classList.remove('done'); }, 1600);
     });
   });
 })();
