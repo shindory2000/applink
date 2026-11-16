@@ -41,6 +41,7 @@
   .stack > * + * { margin-top: 10px; }
   .center { text-align: center; }
   #open { display: none; }
+  #thumb { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; margin: 0 0 16px; background: var(--line); }
 </style>
 </head>
 <body>
@@ -69,6 +70,7 @@
   <section id="open" class="center">
     <h1 id="openTitle">開いています</h1>
     <p class="lead" id="openLead">少しお待ちください。</p>
+    <img id="thumb" alt="" style="display:none">
     <div class="stack" id="openBtns" style="display:none">
       <a class="btn" id="appBtn">アプリで開く</a>
       <a class="btn sub" id="webBtn">ブラウザで開く</a>
@@ -96,6 +98,8 @@
 
     if (host === 'youtube.com' || host === 'youtu.be') {
       r.name = 'YouTube'; r.pkg = 'com.google.android.youtube';
+      r.vid = host === 'youtu.be' ? seg[0]
+        : (u.searchParams.get('v') || ((seg[0] === 'shorts' || seg[0] === 'live') ? seg[1] : null));
       var p = host === 'youtu.be' ? '/watch?v=' + seg[0] : path + u.search;
       r.ios = 'youtube://www.youtube.com' + p;
       r.aPath = 'www.youtube.com' + p;
@@ -124,6 +128,8 @@
 
   var params = new URLSearchParams(location.search);
   var target = params.get('u');
+  // YouTube 用の短い形 ?y=動画ID
+  if (!target && /^[\w-]{6,20}$/.test(params.get('y') || '')) target = 'https://www.youtube.com/watch?v=' + params.get('y');
 
   if (target) {
     document.getElementById('maker').style.display = 'none';
@@ -160,11 +166,22 @@
 
     if (!app) { location.replace(r.web); return; }
 
+    // YouTube はサムネイルと大きなボタンをすぐ出す（ストーリーの中では自動で開けないことがあるため）
+    if (r.vid) {
+      var th = document.getElementById('thumb');
+      th.src = 'https://i.ytimg.com/vi/' + encodeURIComponent(r.vid) + '/hqdefault.jpg';
+      th.style.display = 'block';
+      document.getElementById('openTitle').textContent = 'YouTube で見る';
+      document.getElementById('openLead').textContent = '開かない時は、下のボタンを押してください。';
+      appBtn.textContent = 'YouTube アプリで見る';
+      document.getElementById('openBtns').style.display = 'block';
+    }
+
     var left = false;
     document.addEventListener('visibilitychange', function () { if (document.hidden) left = true; });
     location.href = app;
     setTimeout(function () {
-      if (left) return;
+      if (left || r.vid) return;
       document.getElementById('openTitle').textContent = 'うまく開かない時は';
       document.getElementById('openLead').textContent = '下のボタンを押してください。';
       document.getElementById('openBtns').style.display = 'block';
@@ -179,7 +196,10 @@
     if (v && !/^https?:\/\//i.test(v)) v = 'https://' + v;
     var r = plan(v);
     if (!r) { src.focus(); return; }
-    var link = location.origin + location.pathname + '?u=' + encodeURIComponent(r.web);
+    var base = location.origin + location.pathname;
+    var link = r.vid && /^[\w-]{6,20}$/.test(r.vid) && !r.web.match(/\/shorts\//)
+      ? base + '?y=' + r.vid
+      : base + '?u=' + encodeURIComponent(r.web);
     document.getElementById('out').textContent = link;
     document.getElementById('try').href = link;
     document.getElementById('kind').textContent = r.name
