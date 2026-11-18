@@ -222,10 +222,18 @@
 
     // Instagram などのアプリの中では Web に切り替えず、押せるボタンを残す
     var inInApp = inLine || inOtherApp;
-    if (r.name === 'YouTube' && isIOS && inInApp && !inTikTok) {
+    if (r.name === 'YouTube' && isIOS && !inTikTok) {
       var sb = $('safariBtn');
       sb.href = 'x-safari-' + location.href;
       sb.style.display = 'block';
+    }
+
+    // 調べる用：&debug を付けると、端末とアプリの名前を画面の下に出す
+    if (params.has('debug')) {
+      var d = document.createElement('p');
+      d.style.cssText = 'margin-top:28px;font-size:11px;color:#67706b;word-break:break-all;max-width:340px';
+      d.textContent = ua;
+      $('open').appendChild(d);
     }
 
     function showButtons() {
