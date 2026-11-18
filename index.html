@@ -217,12 +217,15 @@
     var appBtn = $('appBtn');
     appBtn.textContent = r.name ? r.name + ' で開く' : 'ブラウザで開く';
     if (app) appBtn.href = app; else appBtn.style.display = 'none';
+    // TikTok の中で Safari 経由が止められた時のため、ボタンは別の道（直接 YouTube）と Safari 経由の両方を出す
+    var tiktokIOS = isIOS && inTikTok && r.ios;
+    if (tiktokIOS) appBtn.href = r.ios;
 
     if (!app) { location.replace(r.web); return; }
 
     // Instagram などのアプリの中では Web に切り替えず、押せるボタンを残す
     var inInApp = inLine || inOtherApp;
-    if (r.name === 'YouTube' && isIOS && !inTikTok) {
+    if (r.name === 'YouTube' && isIOS) {
       var sb = $('safariBtn');
       sb.href = 'x-safari-' + location.href;
       sb.style.display = 'block';
@@ -237,7 +240,9 @@
     }
 
     function showButtons() {
-      $('openLead').textContent = '開かない時は下のボタンを押してください';
+      $('openLead').textContent = tiktokIOS
+        ? '開かない時は、右上のメニューから外部のブラウザで開いてください'
+        : '開かない時は下のボタンを押してください';
       $('openBtns').className = 'show';
     }
 
