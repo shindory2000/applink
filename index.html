@@ -257,7 +257,10 @@
   }
 
   // 作る画面：開いた時にロードを一瞬出してから、貼る箱へ
-  setTimeout(function () { $('splash').className = 'gone'; }, 1300);
+  setTimeout(function () {
+    var sp = $('splash'); sp.className = 'gone';
+    setTimeout(function () { sp.style.display = 'none'; }, 700);
+  }, 1300);
   var src = $('src');
   function make() {
     var v = src.value.trim();
