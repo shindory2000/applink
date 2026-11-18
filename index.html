@@ -23,12 +23,12 @@
 
   /* 作る画面：箱ひとつ */
   #maker { max-width: 520px; margin: 0 auto; padding: 56px 16px 40px; }
-  .head { margin: 0 4px 28px; animation: in .8s .8s var(--ease) both; }
+  .head { margin: 0 4px 28px; animation: in .7s var(--ease) both; }
   .head .mark { width: 30px; height: 30px; color: var(--accent); display: block; margin-bottom: 18px; }
   .head .mark path { stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; fill: var(--accent-soft); }
   .head h1 { margin: 0; font-size: 29px; line-height: 1.18; font-weight: 600; letter-spacing: -.01em; }
   .head p { margin: 14px 0 0; font-size: 14px; color: var(--muted); line-height: 1.75; }
-  .after { margin: 22px 4px 0; font-size: 13px; color: var(--muted); line-height: 1.8; animation: in .8s 1s var(--ease) both; }
+  .after { margin: 22px 4px 0; font-size: 13px; color: var(--muted); line-height: 1.8; animation: in .7s .16s var(--ease) both; }
   .after b { color: var(--text); font-weight: 600; }
   .after a { color: var(--accent); font-weight: 600; text-underline-offset: 3px; }
   .box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
@@ -38,6 +38,8 @@
     padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; outline: none;
     transition: border-color .4s var(--ease), box-shadow .4s var(--ease);
   }
+  .row #src { flex: 1; min-width: 0; width: auto; }
+  .btn[hidden] { display: none; }
   #src:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   .err { margin: 10px 0 0; font-size: 13px; color: var(--danger); display: none; }
 
@@ -58,6 +60,7 @@
     transition: transform .35s var(--ease), background .35s var(--ease);
   }
   .btn:active { transform: scale(.96); }
+  .btn.ghost { background: var(--surface); color: var(--accent); }
   .btn.done { background: var(--accent-soft); color: var(--accent); }
   .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
   .kind { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
@@ -72,12 +75,8 @@
   @keyframes pop { 0% { transform: scale(.3); opacity: 0; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); } }
   @keyframes tap { 0%, 100% { transform: translateY(0) rotate(0); } 18% { transform: translateY(3px) scale(.9); } 40% { transform: translateY(-10px) rotate(-10deg); } 62% { transform: translateY(0) rotate(0); } }
   @keyframes fill { 0%, 15% { fill: transparent; } 30%, 80% { fill: var(--accent-soft); } 100% { fill: transparent; } }
-  .tagline { margin: 20px 0 0; font-size: 15px; font-weight: 600; letter-spacing: .02em; }
 
-  /* 開いた時のロード */
-  #splash { position: fixed; inset: 0; z-index: 5; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; text-align: center; transition: opacity .6s var(--ease), visibility .6s; }
-  #splash.gone { opacity: 0; visibility: hidden; }
-  #maker .box { animation: in .8s .9s var(--ease) both; }
+  #maker .box { animation: in .7s .08s var(--ease) both; }
   #openTitle { margin: 20px 0 0; font-size: 15px; font-weight: 600; }
   #openLead { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
   #openBtns { display: none; margin-top: 22px; width: 100%; max-width: 320px; }
@@ -90,11 +89,6 @@
 </head>
 <body>
 
-<div id="splash">
-  <div class="pop" aria-hidden="true"><svg viewBox="0 0 24 24"><g><path d="M7 10v12"/><path class="hand" d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></g></svg></div>
-  <p class="tagline">リンクから直接、いいね・チャンネル登録を可能に</p>
-</div>
-
 <section id="maker">
   <header class="head">
     <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
@@ -103,7 +97,10 @@
   </header>
   <div class="box">
     <label for="src">リンクを貼る</label>
-    <input id="src" type="url" inputmode="url" placeholder="https://youtu.be/…" autocomplete="off">
+    <div class="row">
+      <input id="src" type="url" inputmode="url" placeholder="https://youtu.be/…" autocomplete="off">
+      <button class="btn ghost" id="paste" type="button" hidden>貼り付け</button>
+    </div>
     <p class="err" id="err">作れるのは YouTube・Instagram・X・Amazon・TikTok・LINE と、自社サイトのリンクです。</p>
     <div id="result">
       <div class="row">
@@ -215,7 +212,6 @@
 
   if (target) {
     $('maker').style.display = 'none';
-    $('splash').style.display = 'none';
     $('open').style.display = 'flex';
     var r = plan(target);
     if (!r) {
@@ -310,11 +306,6 @@
     return;
   }
 
-  // 作る画面：開いた時にロードを一瞬出してから、貼る箱へ
-  setTimeout(function () {
-    var sp = $('splash'); sp.className = 'gone';
-    setTimeout(function () { sp.style.display = 'none'; }, 700);
-  }, 1300);
   var src = $('src');
   function make() {
     var v = src.value.trim();
@@ -336,6 +327,17 @@
     res.className = ''; void res.offsetWidth; res.className = 'show';
   }
   src.addEventListener('input', make);
+  // 1回押すだけで貼れるボタン（読み取りに対応したブラウザだけ）
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    var pb = $('paste'); pb.hidden = false;
+    pb.addEventListener('click', function () {
+      navigator.clipboard.readText().then(function (t) {
+        if (!t) return;
+        src.value = t.trim(); make();
+        if ($('result').className === 'show') $('copy').focus({ preventScroll: true });
+      }).catch(function () { src.focus(); });
+    });
+  }
   src.addEventListener('paste', function () { setTimeout(make, 0); });
   $('copy').addEventListener('click', function () {
     var b = this, s = b.querySelector('span');
