@@ -154,7 +154,7 @@
       else if (seg.length === 1) r.ios = 'twitter://user?screen_name=' + encodeURIComponent(seg[0]);
     } else if (/(^|\.)amazon\.co\.jp$|(^|\.)amazon\.com$|^amzn\.(asia|to)$/.test(host)) {
       r.name = 'Amazon'; r.pkg = 'com.amazon.mShop.android.shopping';
-      r.ios = 'com.amazon.mobile.shopping.web://' + u.host + u.pathname + u.search;
+      r.ios = r.android = 'com.amazon.mobile.shopping.web://' + u.host.replace(/^www\./, '') + u.pathname + u.search; // URLgenius と同じく iPhone・Android とも Amazon の印で開く
     } else if (host === 'tiktok.com' || /\.tiktok\.com$/.test(host)) {
       r.name = 'TikTok'; r.pkg = 'com.zhiliaoapp.musically';
     } else if (host === 'line.me' || host === 'lin.ee') {
@@ -189,7 +189,7 @@
 
     // LINE の中なら、まず普段のブラウザに出す（LINE が対応している公式の方法）
     // YouTube は URLgenius と同じく LINE の中からも直接アプリを開く
-    if (inLine && !r.vid && r.name !== 'YouTube' && !params.has('openExternalBrowser')) {
+    if (inLine && !r.vid && r.name !== 'YouTube' && r.name !== 'Amazon' && !params.has('openExternalBrowser')) {
       location.replace(location.href + '&openExternalBrowser=1');
       return;
     }
@@ -200,7 +200,7 @@
       app = r.android || androidIntent(r, r.pkg || (inOtherApp ? 'com.android.chrome' : null));
       if (!r.android && !r.pkg && !inOtherApp) app = null;
       // YouTube は URLgenius と同じ使い分け：Chrome・LINE は intent、Facebook は一度 Chrome へ、他のアプリ内は vnd.youtube
-      if (r.android) {
+      if (r.android && r.name === 'YouTube') {
         var inFB = /FBAN|FBAV|FB_IAB/.test(ua);
         if (inFB) app = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
         else if (!inOtherApp || /Barcelona|Threads/.test(ua)) app = androidIntent(r, r.pkg);
