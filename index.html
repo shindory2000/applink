@@ -6,11 +6,13 @@
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#f5f6f5">
 <title>リンクから直接いいね</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f5f6f5; --surface: #fff; --text: #1d2420; --muted: #67706b;
+    --bg: #f4f5f3; --surface: #fff; --text: #17201b; --muted: #67706b;
     --line: #dfe3e0; --accent: #1f6f4a; --accent-soft: #e9f2ed; --danger: #b42318;
-    --ease: cubic-bezier(0.19, 1, 0.22, 1);
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -21,66 +23,77 @@
   }
   a { color: inherit; }
 
-  /* 作る画面：箱ひとつ */
-  #maker { max-width: 520px; margin: 0 auto; padding: 56px 16px 40px; }
-  .head { margin: 0 4px 28px; animation: in .7s var(--ease) both; }
-  .head .mark { width: 30px; height: 30px; color: var(--accent); display: block; margin-bottom: 18px; }
-  .head .mark path { stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; fill: var(--accent-soft); }
-  .head h1 { margin: 0; font-size: 29px; line-height: 1.18; font-weight: 600; letter-spacing: -.01em; }
-  .head p { margin: 14px 0 0; font-size: 14px; color: var(--muted); line-height: 1.75; }
-  .after { margin: 22px 4px 0; font-size: 13px; color: var(--muted); line-height: 1.8; animation: in .7s .16s var(--ease) both; }
-  .after b { color: var(--text); font-weight: 600; }
+  /* 作る画面 */
+  #maker { max-width: 520px; margin: 0 auto; padding: 64px 20px 48px; }
+  .head { margin: 0 0 36px; animation: rise .9s var(--ease) both; }
+  .head h1 { margin: 0; font-family: "Zen Kaku Gothic New", "Hiragino Sans", sans-serif; font-size: 40px; line-height: 1.08; font-weight: 700; letter-spacing: -.02em; color: var(--text); }
+  .head h1 em { font-style: normal; color: var(--accent); }
+  .head p { margin: 18px 0 0; font-size: 14px; color: var(--muted); line-height: 1.8; }
+  .after { margin: 28px 0 0; font-size: 13px; color: var(--muted); line-height: 1.8; animation: rise .9s .14s var(--ease) both; }
   .after a { color: var(--accent); font-weight: 600; text-underline-offset: 3px; }
-  .box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+  .box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; animation: rise .9s .07s var(--ease) both; }
   .box label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
   #src {
-    width: 100%; font: inherit; font-size: 16px; color: var(--text);
+    flex: 1; min-width: 0; font: inherit; font-size: 16px; color: var(--text);
     padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; outline: none;
     transition: border-color .4s var(--ease), box-shadow .4s var(--ease);
   }
-  .row #src { flex: 1; min-width: 0; width: auto; }
-  .btn[hidden] { display: none; }
   #src:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .btn[hidden] { display: none; }
   .err { margin: 10px 0 0; font-size: 13px; color: var(--danger); display: none; }
-
-  #result { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
-  #result.show { display: block; animation: in .6s var(--ease) both; }
-  @keyframes in { from { opacity: 0; transform: translateY(6px); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
   .row { display: flex; gap: 8px; align-items: stretch; }
-  #out {
-    flex: 1; min-width: 0; font-size: 14px; padding: 11px 12px; border-radius: 8px;
-    background: var(--bg); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* できたリンク：ストーリーでの見え方を横に出す */
+  #result { display: none; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); grid-template-columns: 112px 1fr; gap: 18px; align-items: center; }
+  #result.show { display: grid; }
+  .story {
+    position: relative; width: 112px; aspect-ratio: 9 / 16; border-radius: 10px; overflow: hidden;
+    background: #1b2a22 center / cover no-repeat; display: flex; align-items: center; justify-content: center;
   }
+  .story::after { content: ""; position: absolute; inset: 0; background: linear-gradient(#0000 55%, #0b120e99); }
+  #result.show .story { animation: story .8s var(--ease) both; }
+  @keyframes story { from { opacity: 0; transform: scale(.9) rotate(-2deg); } }
+  .sticker {
+    position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 3px; padding: 5px 7px;
+    background: #fff; color: #1a1f1c; border-radius: 6px; font-size: 7.5px; font-weight: 700; letter-spacing: .01em; white-space: nowrap;
+  }
+  #result.show .sticker { animation: stick .7s .25s var(--ease) both; }
+  @keyframes stick { from { opacity: 0; transform: scale(.4); } }
+  .sticker svg { width: 9px; height: 9px; stroke: #2b7cf6; fill: none; stroke-width: 2.4; stroke-linecap: round; }
+  .side { min-width: 0; animation: rise .8s .1s var(--ease) both; }
+  .side .cap { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+  #out {
+    font-size: 13px; padding: 10px 12px; border-radius: 8px; background: var(--bg); color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  #copy { width: 100%; margin-top: 8px; }
+  .kind { margin: 10px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     font: inherit; font-size: 15px; font-weight: 600; white-space: nowrap; text-decoration: none;
     padding: 0 18px; min-height: 44px; border-radius: 8px; border: 1px solid var(--accent);
     background: var(--accent); color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent;
-    transition: transform .35s var(--ease), background .35s var(--ease);
+    transition: transform .4s var(--ease), background .4s var(--ease), color .4s var(--ease);
   }
-  .btn:active { transform: scale(.96); }
+  .btn:active { transform: scale(.95); }
   .btn.ghost { background: var(--surface); color: var(--accent); }
   .btn.done { background: var(--accent-soft); color: var(--accent); }
   .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-  .kind { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+  @media (max-width: 360px) { .head h1 { font-size: 34px; } #result { grid-template-columns: 96px 1fr; } .story { width: 96px; } }
 
-  /* 押した人の画面：ロードだけ */
-  #open { display: none; min-height: 100svh; align-items: center; justify-content: center; flex-direction: column; padding: 24px 16px; text-align: center; }
-  .pop { width: 64px; height: 64px; color: var(--accent); animation: pop .7s var(--ease) both; }
-  .pop svg { width: 100%; height: 100%; overflow: visible; }
-  .pop path { stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; fill: transparent; }
-  .pop g { transform-origin: 50% 70%; animation: tap 1.4s .6s var(--ease) infinite; }
-  .pop .hand { animation: fill 1.4s .6s var(--ease) infinite; }
-  @keyframes pop { 0% { transform: scale(.3); opacity: 0; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); } }
-  @keyframes tap { 0%, 100% { transform: translateY(0) rotate(0); } 18% { transform: translateY(3px) scale(.9); } 40% { transform: translateY(-10px) rotate(-10deg); } 62% { transform: translateY(0) rotate(0); } }
-  @keyframes fill { 0%, 15% { fill: transparent; } 30%, 80% { fill: var(--accent-soft); } 100% { fill: transparent; } }
-
-  #maker .box { animation: in .7s .08s var(--ease) both; }
-  #openTitle { margin: 20px 0 0; font-size: 15px; font-weight: 600; }
-  #openLead { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+  /* 押した人の画面：これから開く動画を見せて、進み具合の線を流す */
+  #open { display: none; min-height: 100svh; align-items: center; justify-content: center; flex-direction: column; padding: 24px 20px; text-align: center; }
+  .vid { width: min(320px, 100%); aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: var(--line); animation: story .9s var(--ease) both; }
+  .vid img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .vid[hidden] { display: none; }
+  #openTitle { margin: 22px 0 0; font-size: 15px; font-weight: 600; animation: rise .8s .1s var(--ease) both; }
+  .bar { position: relative; width: 120px; height: 2px; margin-top: 14px; border-radius: 2px; background: var(--line); overflow: hidden; }
+  .bar i { position: absolute; inset: 0; width: 40%; background: var(--accent); border-radius: 2px; animation: run 1.3s var(--ease) infinite; }
+  @keyframes run { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+  #openLead { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
   #openBtns { display: none; margin-top: 22px; width: 100%; max-width: 320px; }
-  #openBtns.show { display: block; animation: in .6s var(--ease) both; }
+  #openBtns.show { display: block; animation: rise .6s var(--ease) both; }
   #openBtns .btn { width: 100%; }
   #openBtns .alt { display: block; margin-top: 12px; font-size: 13px; color: var(--muted); }
 
@@ -91,34 +104,38 @@
 
 <section id="maker">
   <header class="head">
-    <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
-    <h1>リンクから直接、<br>いいね・チャンネル登録</h1>
+    <h1>リンクから直接、<br><em>いいね</em>、<br>チャンネル登録</h1>
     <p>Instagram のストーリーに YouTube のリンクを貼ると、いいねを押した時に Google のログインから始まります。ここで作り替えると、ログインしたままの YouTube アプリが開き、そのまま押せます。</p>
   </header>
   <div class="box">
-    <label for="src">リンクを貼る</label>
+    <label for="src">YouTube のリンク</label>
     <div class="row">
-      <input id="src" type="url" inputmode="url" placeholder="https://youtu.be/…" autocomplete="off">
+      <input id="src" type="url" inputmode="url" placeholder="https://youtu.be/" autocomplete="off">
       <button class="btn ghost" id="paste" type="button" hidden>貼り付け</button>
     </div>
-    <p class="err" id="err">作れるのは YouTube・Instagram・X・Amazon・TikTok・LINE と、自社サイトのリンクです。</p>
+    <p class="err" id="err">作れるのは YouTube、Instagram、X、Amazon、TikTok、LINE と、自社サイトのリンクです。</p>
     <div id="result">
-      <div class="row">
+      <div class="story" id="story">
+        <span class="sticker"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span id="stickerText">GO.LULINECAST.JP</span></span>
+      </div>
+      <div class="side">
+        <p class="cap">ストーリーではこう見えます</p>
         <div id="out"></div>
         <button class="btn" id="copy" type="button">
           <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>
           <span>コピー</span>
         </button>
+        <p class="kind" id="kind"></p>
       </div>
-      <p class="kind" id="kind"></p>
     </div>
   </div>
-  <p class="after"><b>できたリンクは、ストーリーのリンクスタンプに。</b><br>X・Threads は YouTube のリンクのままで、アプリが開きます。<br><a href="count.html">押された回数を見る</a></p>
+  <p class="after">できたリンクは、ストーリーのリンクスタンプに貼ります。X や Threads では、YouTube のリンクのままでアプリが開きます。<br><a href="count.html">押された回数を見る</a></p>
 </section>
 
 <section id="open">
-  <div class="pop" aria-hidden="true"><svg viewBox="0 0 24 24"><g><path d="M7 10v12"/><path class="hand" d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></g></svg></div>
-  <p id="openTitle">リンクから直接、いいね・チャンネル登録を可能に</p>
+  <div class="vid" id="vid" hidden><img id="vidImg" alt=""></div>
+  <p id="openTitle">YouTube を開いています</p>
+  <div class="bar" id="bar" aria-hidden="true"><i></i></div>
   <p id="openLead"></p>
   <div id="openBtns">
     <a class="btn" id="appBtn">開く</a>
@@ -215,7 +232,7 @@
     $('open').style.display = 'flex';
     var r = plan(target);
     if (!r) {
-      document.querySelector('#open .pop').style.display = 'none';
+      $('bar').style.display = 'none';
       $('openTitle').textContent = 'このリンクは開けません';
       $('openLead').textContent = '作った人にリンクを確かめてもらってください';
       return;
@@ -249,6 +266,7 @@
       else if (inOtherApp) app = 'x-safari-' + r.web; // Instagram などの中から Safari に出す
     }
 
+    if (r.vid) { $('vidImg').src = 'https://i.ytimg.com/vi/' + r.vid + '/mqdefault.jpg'; $('vid').hidden = false; }
     if (r.name !== 'YouTube') $('openTitle').textContent = r.name ? r.name + ' を開いています' : 'ページを開いています';
     $('webBtn').href = r.web;
     var appBtn = $('appBtn');
@@ -277,6 +295,7 @@
     }
 
     function showButtons() {
+      $('bar').style.display = 'none';
       $('openLead').textContent = tiktokIOS
         ? '開かない時は、右上のメニューから外部のブラウザで開いてください'
         : '開かない時は下のボタンを押してください';
@@ -321,9 +340,11 @@
     if ($('out').textContent === link && res.className === 'show') return;
     $('out').textContent = link;
     $('kind').textContent = r.name === 'YouTube'
-      ? 'YouTube にログインしている人は、このリンクからそのままいいね・チャンネル登録できます'
+      ? 'YouTube にログインしている人は、押すとそのままいいねと登録ができます'
       : r.name ? r.name + ' にログインしたままの状態で開きます'
       : 'Instagram などの中で押されても、普段のブラウザで開きます';
+    $('story').style.backgroundImage = r.vid ? 'url(https://i.ytimg.com/vi/' + r.vid + '/hqdefault.jpg)' : '';
+    $('stickerText').textContent = location.host.toUpperCase();
     res.className = ''; void res.offsetWidth; res.className = 'show';
   }
   src.addEventListener('input', make);
