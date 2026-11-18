@@ -203,7 +203,7 @@
       if (r.android) {
         var inFB = /FBAN|FBAV|FB_IAB/.test(ua);
         if (inFB) app = 'intent://' + location.host + location.pathname + location.search + '#Intent;scheme=https;package=com.android.chrome;end';
-        else if (!inOtherApp) app = androidIntent(r, r.pkg);
+        else if (!inOtherApp || /Barcelona|Threads/.test(ua)) app = androidIntent(r, r.pkg);
       }
     } else if (isIOS) {
       // URLgenius と同じく、TikTok の中からは一度 Safari に出してからアプリを開く
