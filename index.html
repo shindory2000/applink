@@ -6,8 +6,6 @@
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#f5f6f5">
 <title>リンクから直接いいね</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #f4f5f3; --surface: #fff; --text: #17201b; --muted: #67706b;
@@ -25,10 +23,8 @@
 
   /* 作る画面 */
   #maker { max-width: 520px; margin: 0 auto; padding: 64px 20px 48px; }
-  .head { margin: 0 0 36px; animation: rise .9s var(--ease) both; }
-  .head h1 { margin: 0; font-family: "Zen Kaku Gothic New", "Hiragino Sans", sans-serif; font-size: 40px; line-height: 1.08; font-weight: 700; letter-spacing: -.02em; color: var(--text); }
-  .head h1 em { font-style: normal; color: var(--accent); }
-  .head p { margin: 18px 0 0; font-size: 14px; color: var(--muted); line-height: 1.8; }
+  .head { margin: 0 0 24px; animation: rise .9s var(--ease) both; }
+  .head p { margin: 0; font-size: 15px; color: var(--text); line-height: 1.8; }
   .after { margin: 28px 0 0; font-size: 13px; color: var(--muted); line-height: 1.8; animation: rise .9s .14s var(--ease) both; }
   .after a { color: var(--accent); font-weight: 600; text-underline-offset: 3px; }
   .box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; animation: rise .9s .07s var(--ease) both; }
@@ -80,7 +76,7 @@
   .btn.ghost { background: var(--surface); color: var(--accent); }
   .btn.done { background: var(--accent-soft); color: var(--accent); }
   .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-  @media (max-width: 360px) { .head h1 { font-size: 34px; } #result { grid-template-columns: 96px 1fr; } .story { width: 96px; } }
+  @media (max-width: 360px) { #result { grid-template-columns: 96px 1fr; } .story { width: 96px; } }
 
   /* 押した人の画面：これから開く動画を見せて、進み具合の線を流す */
   #open { display: none; min-height: 100svh; align-items: center; justify-content: center; flex-direction: column; padding: 24px 20px; text-align: center; }
@@ -104,8 +100,7 @@
 
 <section id="maker">
   <header class="head">
-    <h1>リンクから直接、<br><em>いいね</em>、<br>チャンネル登録</h1>
-    <p>Instagram のストーリーに YouTube のリンクを貼ると、いいねを押した時に Google のログインから始まります。ここで作り替えると、ログインしたままの YouTube アプリが開き、そのまま押せます。</p>
+    <p>このサイトでリンクを作り変えると、ログインしたままの YouTube アプリが開き、そのままいいねやチャンネル登録を押せます。</p>
   </header>
   <div class="box">
     <label for="src">YouTube のリンク</label>
